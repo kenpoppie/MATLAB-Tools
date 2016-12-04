@@ -1,4 +1,4 @@
-function [ f, rsq ] = regression( x, y, model )
+function [ f, p, rsq ] = regression( x, y, model )
 %REGRESSION
 %
 %   [ f, rsq ] = regression( x, y, model )
@@ -21,6 +21,12 @@ function [ f, rsq ] = regression( x, y, model )
 %RETURNS:
 %   f       The regression function as a vectorized string.
 %
+%   p       A vector of the computed paramters.
+%           For 'linear', [m,b] is returned.
+%           For 'power' and 'expo', [a,b] is returned.
+%           For 'quad', [a,b,c] is returned. 
+%           For 'cubic', [a,b,c,d] is returned.
+%
 %   rsq     R-squared value.
 %           R-squared has the useful property that its scale is intuitive:
 %           it ranges from zero to one, with zero indicating that the 
@@ -34,6 +40,7 @@ function [ f, rsq ] = regression( x, y, model )
 
 % Initialize return value
 f = '';
+p = [];
 
 % Make sure X and Y are column vectors.
 if size(x,1) < size(x,2)
@@ -63,6 +70,7 @@ if strcmpi(model,'linear')
     % Compute m and b
     S = (A'*A)\(A'*Y);
     f = sprintf('%0.4f * x + %0.4f', S(1),S(2)); 
+    p = [S(1),S(2)];
     
 elseif strcmpi(model,'power')
     % Power law 
@@ -73,6 +81,7 @@ elseif strcmpi(model,'power')
     S = (C'*C)\(C'*d);
     a = exp(S(2)); b = S(1);
     f = sprintf('%0.4f*x^%0.4f', a, b);
+    p = [a,b];
     
 elseif strcmpi(model,'expo')
     % Exponential law
@@ -82,7 +91,8 @@ elseif strcmpi(model,'expo')
     d = log(Y);
     S = (C'*C)\(C'*d);
     b = exp(S(1));  a = exp(S(2));
-    f = sprintf('%0.4f*%0.4f^x', a, b);   
+    f = sprintf('%0.4f*%0.4f^x', a, b); 
+    p = [a,b];
     
 elseif strcmpi(model,'quad')
     % Quadratic
@@ -91,6 +101,7 @@ elseif strcmpi(model,'quad')
     C = [X.^2  X  ones(nX,1)];
     S = (C'*C)\(C'*Y);
     f = sprintf('%0.4f*x^2 + %0.4f*x + %0.4f', S(1),S(2),S(3));
+    p = [S(1),S(2),S(3)];
 
 elseif strcmpi(model,'cubic')
     % Cubic 
@@ -100,6 +111,7 @@ elseif strcmpi(model,'cubic')
     S = (C'*C)\(C'*Y);
     f = sprintf('%0.4f*x^3 + %0.4f*x^2 + %0.4f*x + %0.4f', ...
         S(1),S(2),S(3),S(4));
+    p = [S(1),S(2),S(3),S(4)];
     
 else
     error('%s is not a valid regression model.', model);
