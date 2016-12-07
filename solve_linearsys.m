@@ -1,7 +1,7 @@
-function [ x, X, iter ] = solve_linearsys(A, b, x0, tol, max_iter, method)
+function [ x, X ] = solve_linearsys(A, b, x0, tol, max_iter, method)
 %SOLVE_LINEARSYS
 %
-%   [x, X, iter] = solve_linearsys(A, b, x0, tol, max_iter, method)
+%   [ x, X ] = solve_linearsys( A, b, x0, tol, max_iter, method )
 %
 %   Approximates the solution to the system Ax=b using the Jacobi 
 %   iterative method or the Gauss-Seidel iterative method.
@@ -27,8 +27,6 @@ function [ x, X, iter ] = solve_linearsys(A, b, x0, tol, max_iter, method)
 %
 %   X           A matrix whose columns are the best solution at each
 %                   iteration of the routine.
-%
-%   iter        The number of iterations the routine actually performed.
 %
 %AUTHOR:    Kenneth Poppie
 %DATE:      10/20/2016

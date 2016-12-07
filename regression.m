@@ -1,10 +1,10 @@
 function [ f, p, rsq ] = regression( x, y, model )
 %REGRESSION
 %
-%   [ f, rsq ] = regression( x, y, model )
+%   [ f, p, rsq ] = regression( x, y, model )
 %
 %   Performs regression analysis on the given (x,y) data fitting 
-%   it to the model specified (see parameters for list of models).
+%   it to the model specified.
 %
 %PARAMETERS:
 %   x       The x values of the data set.
