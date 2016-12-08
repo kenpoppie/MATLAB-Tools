@@ -7,9 +7,7 @@ function area = approx_integral( f, a, b, rule, n )
 %   over the interval [a,b].
 %
 %PARAMTERS:
-%   f       The function to approximate the integral of. 
-%           This can be a function handle or a string representation 
-%           of the function.
+%   f       The function (as a string) to approximate the integral of. 
 %   
 %   a       The x-coordinate of the left boundry of the area.
 %
@@ -17,15 +15,11 @@ function area = approx_integral( f, a, b, rule, n )
 %
 %   rule    Determines the method to use in computing the approximation.
 %           The choices are:
-%               'trap'      for trapezoidal rule,
-%               'simp1/3'   for Simpson's 1/3 rule, 
-%               'simp3/8'   for Simpson's 3/8 rule,
-%               'mid'       for midpoint rule. 
+%               'trap'      for composite trapezoidal rule,
+%               'simp'      for composite Simpson's 1/3 rule, 
+%               'mid'       for composite midpoint rule. 
 % 
-%   n       (optional) If n is provided and n > 2, the composite 
-%           version of the trapezoidal rule or Simpson's 1/3 rule
-%           is performed.  For the other rules, this parameter is 
-%           ignored.
+%   n       The number of subintervals to use. Must be 1 or greater.
 %
 %RETURNS:
 %   area    The approximate area under the curve for the interval [a,b].
@@ -33,171 +27,49 @@ function area = approx_integral( f, a, b, rule, n )
 %AUTHOR:    Kenneth Poppie
 %DATE:      Dec. 4, 2016
 
-% Check a and b. 
-if a > b 
-    error('a must be less than b.');
-end
-
 % Make sure f is a function or a string.
 if ~isa(f,'function_handle') && ~isa(f,'char')
     error('f must be a function handle or string to evalulate.');
 end
 
-% See if we are using the composite version (if it applies).
-using_composite = 0;
-if (nargin > 4) 
-    if n > 2
-        using_composite = 1;
-    else 
-        error('Invalid number of subintervals.');
-    end
+% Check n
+if n < 1
+    error('Number of subinverals must be 1 or greater.');
 end
 
 % Approximate area.
 area = 0;
 if strcmpi(rule,'trap')
     
-    % trapezoidal rule %%%%%%%%%
-    if ~using_composite
-        h = b - a;
-        if isa(f,'function_handle')
-            w1 = f(a);
-            w2 = f(b);
-        else
-            x = a;
-            w1 = eval(f);
-            x = b;
-            w2 = eval(f); 
-        end
-        area = area + (h/2)*(w1 + w2);
-        
-    else % using composite rule
-        h = (b-a)/n;
-        if isa(f,'function_handle')
-            % Eval endpoints
-            w_0 = f(a);
-            w_n = f(b);
-            
-            % Eval midpoints
-            w_mid = 0;
-            for ii = 1:(n-1)
-                w_mid = w_mid + 2*f(a+ii*h);
-            end
-            
-        else % string
-            % Eval endpoints
-            x = a; w_0 = eval(f);
-            x = b; w_n = eval(f);
-            
-            % Eval midpoints
-            w_mid = 0;
-            for ii = 1:(n-1)
-                x = a+ii*h;
-                w_mid = w_mid + 2*eval(f);
-            end
-        end
-                    
-        % Compute area
-        area = (h/2)*(w_0 + w_mid + w_n);
-    end
+    % Composite trapezoidal rule %%%%%%%%%
+    
+    h = (b-a)/n;
+    x = a:h:b;
+    x = eval(vectorize(f));
+    area = (h/2)*(x(1)+x(n+1)+2*sum(x(2:n)));
 
-elseif strcmpi(rule,'simp1/3')
+elseif strcmpi(rule,'simp')
     
-    % Simpson's 1/3 rule %%%%%%%%%%%
+    % Composite Simpson's rule %%%%%%%%%
     
-    if ~using_composite
-        h = (b-a)/2;
-        if isa(f,'function_handle')
-            w1 = f(a);
-            w2 = f((a+b)/2);
-            w3 = f(b);
-        else
-            x = a;
-            w1 = eval(f);
-            x = (a+b)/2;
-            w2 = eval(f);
-            x = b;
-            w3 = eval(f);
-        end
-        area = (h/3)*(w1 + 4*w2 + w3);
-        
-    else % using composite rule
-        h = (b-a)/n;
-        if isa(f,'function_handle')
-            % Eval endpoints
-            w_0 = f(a);  w_n = f(b);
-            
-            % Eval midpoints
-            w_mid = 0;
-            for ii = 1:(n-1)
-                x = a + ii*h;
-                if mod(ii,2) == 1 % odd
-                    coef = 4;
-                else
-                    coef = 2;
-                end
-                w_mid = w_mid + coef*f(x);
-            end
-
-        else % string
-            % Eval endpoints
-            x = a;
-            w_0 = eval(f);
-            x = b; 
-            w_n = eval(f);
-            
-            % Eval midpoints
-            w_mid = 0;
-            for ii = 1:(n-1)
-                if mod(ii,2) == 1 % odd
-                    coef = 4;
-                else
-                    coef = 2;
-                end
-                x = a + ii*h;
-                w_mid = w_mid + coef*eval(f);
-            end
-        end
-        
-        % Compute area
-        area = (h/3)*(w_0 + w_mid + w_n);
-        
-    end % if 
-    
-elseif strcmpi(rule,'simp3/8')
-    
-    % Simpson's 3/8 rule %%%%%%%%%%%
-    
-    h = (b-a)/3;
-    if isa(f,'function_handle')
-        w1 = f(a);
-        w2 = f((2*a+b)/3);
-        w3 = f((a+2*b)/3);
-        w4 = f(b);
-    else
-        x = a;
-        w1 = eval(f);
-        x = (2*a+b)/3;
-        w2 = eval(f);
-        x = (a+2*b)/3;
-        w3 = eval(f);
-        x = b;
-        w4 = eval(f);
-    end
-    area = 3*(h/8)*(w1 + 3*w2 + 3*w3 + w4);
+    h=(b-a)/(2*n);
+    x = a:h:b;
+    y = eval(vectorize(f));
+    t = [zeros(1,n-1); ones(1,n-1)];
+    t = t(:)';
+    t = 2*(ones(size(t))+t);
+    t = [1 4 t 1]; %array of coefficients for Simpson's Rule
+    area = (h/3)*(t*y');
     
 elseif strcmpi(rule,'mid')
     
-    % Midpoint rule %%%%%%%%%%
+    % Composite midpoint rule %%%%%%%%%%%%%%
     
-    h = b - a;
-    if isa(f,'function_handle')
-        area = h*f((a+b)/2);
-    else
-        x = (a+b)/2;
-        area = h*eval(f);
-    end
-    
+    h=(b-a)/(2*n);
+    xp = a:h:b;
+    x = xp(2:2:length(xp));
+    area = 2*h*sum(eval(vectorize(f)));
+
 else
     error('Not a valid rule. Type ''help approx_integral'' %s', ...
         'to see rule choices.');
